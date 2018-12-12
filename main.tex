@@ -46,7 +46,7 @@ Methodology for feature extraction using Hyperspectral Images
 \author{Alexander Johnson, Wenxin Xiao and Juan Vargas% <-this % stops a space
 }
 
-
+\usepackage{graphicx}
 \begin{document}
 
 
@@ -67,80 +67,181 @@ Images are widely used in pattern recognition problems to identify objects or si
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{INTRODUCTION}
 
-This template, modified in MS Word 2003 and saved as ÒWord 97-2003 \& 6.0/95 Ð RTFÓ for the PC, provides authors with most of the formatting specifications needed for preparing electronic versions of their papers. All standard paper components have been specified for three reasons: (1) ease of use when formatting individual papers, (2) automatic compliance to electronic requirements that facilitate the concurrent or later production of electronic products, and (3) conformity of style throughout a conference proceedings. Margins, column widths, line spacing, and type styles are built-in; examples of the type styles are provided throughout this document and are identified in italic type, within parentheses, following the example. Some components, such as multi-leveled equations, graphics, and tables are not prescribed, although the various table text styles are provided. The formatter will need to create these components, incorporating the applicable criteria that follow.
+Hyperspectral imaging is the process of obtaining information of the electromagnetic spectrum well beyond the range of visible light. Often these images are described as 3D cubes of information in which the spatial information is the front face of the cube, and the depth is each hyperspectral channel stacked one on top of the other.
 
-\section{PROCEDURE FOR PAPER SUBMISSION}
+
+\begin{figure}[thpb]
+      \centering
+      %\framebox{\parbox{3in}{}}
+      \includegraphics[width=220pt]{HyperspectralCube.jpg}
+      \caption{Artistic representation of a hyperspectral image on three dimensions}
+      \label{figure_HSI_cube}
+   \end{figure}
+
+The advantages of these images is the abundance of information that can be used for scientific or commercial purposes. During the past three decades, hyperspectral images have been used in agriculture, food processing, mineralogy, surveillance, and astronomy; among others. With the advent of artificial neural networks and machine learning for pattern recognition, such use cases are gradually improving.
+
+On the other hand, the main disadvantage of using hyperspectral images is the cost and availability of devices able to capture these images. There are institutions that have been collecting images over the years, one of them being NASA, who developed the Airborne Visible/Infrared Imaging Spectrometer (AVIRIS) instrument and makes the images publicly available on its web site. For this project, we used images from this database. Newer databases are often harder to obtain.
+
+Another disadvantage of using hyperspectral images for pattern recognition is the required post-processing of the captured data. For instance, not all image spectrometers collect data on the same continuous bands, and not all the instruments band widths are the same. As a result, analysis done for images on one device may not be applicable to images from a different device. Further, most images collected from satellites or airplanes need to be orthocorrected after being captured, and the need for these corrections are often found years after the photos are taken.  
+
+\section{MOTIVATION}
+\begin{itemize}
+\item Our goal for this project was to create a classifier that could improve on previous HSI classifiers, and take better advantage of the entire spectrum contained in the images. However, while striving to achieve this goal we encountered three main obstacles: very low amount of data, low resolution images, and poor labeling.
+
+\item As the result of the poor quality of the data, a key part of the project has become not only increasing the accuracy of the classifier but also compensating for the insufficiencies in the data. 
+
+\item In our project, we implemented a baseline CNN based on a paper published in ScienceDirect and then made informed changes to the CNN architecture and data processing to provide better accuracy in hyperspectral image classification. 
+
+\item The strategies we propose on hyperspectral image analysis might have further applications in other fields, such as in the investigation of seed viability, in tracing changes in the environment, and in the exploration of oil and gas. 
+
+\item Additionally, our strategies for dealing data with limited size and resolution might be useful for other peers working under similar constraints. 
+\end{itemize}
+
+\section{RELATED WORK}
 
 \subsection{Selecting a Template (Heading 2)}
 
-First, confirm that you have the correct template for your paper size. This template has been tailored for output on the US-letter paper size. Please do not use it for A4 paper since the margin requirements for A4 papers may be different from Letter paper size.
+Stuff
 
-\subsection{Maintaining the Integrity of the Specifications}
+\section{METHODOLOGY}
 
-The template is used to format your paper and style the text. All margins, column widths, line spaces, and text fonts are prescribed; please do not alter them. You may note peculiarities. For example, the head margin in this template measures proportionately more than is customary. This measurement and others are deliberate, using specifications that anticipate your paper as one part of the entire proceedings, and not as an independent document. Please do not revise any of the current designations
+\subsection{Tools}
 
-\section{MATH}
+During the course of this project we worked almost entirely with Python to pre-process the data, visualize it, and execute the design of the neural network. To a lesser extent, we used Matlab to manipulate files that were provided in .mat format.
 
-Before you begin to format your paper, first write and save the content as a separate text file. Keep your text and graphic files separate until after the text has been formatted and styled. Do not use hard tabs, and limit use of hard returns to only one return at the end of a paragraph. Do not add any kind of pagination anywhere in the paper. Do not number text heads-the template will do that for you.
+\subsection{Description of data}
 
-Finally, complete content and organizational editing before formatting. Please take note of the following items when proofreading spelling and grammar:
+Hyperspectral image files from the NASA/JPL Aviris web site are usually downloaded as large .zip files several gigabytes in size. Inside, there are multiple files that contain different kinds of information. Loading the files into memory is done relatively simply by loading the header file and reading the large image contents on a need basis. We used the Spectral python library for these purposes.
 
-\subsection{Abbreviations and Acronyms} Define abbreviations and acronyms the first time they are used in the text, even after they have been defined in the abstract. Abbreviations such as IEEE, SI, MKS, CGS, sc, dc, and rms do not have to be defined. Do not use abbreviations in the title or heads unless they are unavoidable.
+It is possible to take the bisible range channels of a hyperspectral image, and process it into an RGB photographs as shown below.
 
-\subsection{Units}
+\begin{figure}[thpb]
+      \centering
+      %\framebox{\parbox{3in}{}}
+      \includegraphics[width=220pt]{BoulderCity.png}
+      \caption{Sample hyperspectral image, cropped, and visualized in RGB colors}
+      \label{figure_BC}
+   \end{figure}
+
+
+However, each pixel on this image contains abundant information. For instance, we show three different pixels we grabbed from this photograph file (Boulder City, NV).
+
+\begin{figure}[thpb]
+      \centering
+      %\framebox{\parbox{3in}{}}
+      \includegraphics[width=220pt]{BC_pixel_01.png}
+      \includegraphics[width=220pt]{BC_pixel_02.png}
+      \includegraphics[width=220pt]{BC_pixel_03.png}
+      \caption{Sample pixel information on 220 bands}
+      \label{figure_spectrum}
+   \end{figure}
+
+We marked the bands that we took for the peak color information. As you can see, most of the information on each pixel is discarded when converting the data to RGB.
+
+
+
+\subsection{Design of the Artificial Neural Network}
+
+The following is the specifics of our CNN design: 
 
 \begin{itemize}
 
-\item Use either SI (MKS) or CGS as primary units. (SI units are encouraged.) English units may be used as secondary units (in parentheses). An exception would be the use of English units as identifiers in trade, such as Ò3.5-inch disk driveÓ.
-\item Avoid combining SI and CGS units, such as current in amperes and magnetic field in oersteds. This often leads to confusion because equations do not balance dimensionally. If you must use mixed units, clearly state the units for each quantity that you use in an equation.
-\item Do not mix complete spellings and abbreviations of units: ÒWb/m2Ó or Òwebers per square meterÓ, not Òwebers/m2Ó.  Spell out units when they appear in text: Ò. . . a few henriesÓ, not Ò. . . a few HÓ.
-\item Use a zero before decimal points: Ò0.25Ó, not Ò.25Ó. Use Òcm3Ó, not ÒccÓ. (bullet list)
+\item The CNN consists of 3 convolutional layers, 2 dropout layers, and 1 pooling layer. 
+\item There are 128, 64, and 17 filters in each layer, respectively. 
+\item The kernel size is 5x5 and the dropout rate is set to be 0.5. 
+\item We used the ReLU activation function, the Adam gradient descent optimizer, and the cross-entropy loss function. 
+\item We convert an input sample size of 5x5 pixels to 10x10 using bilinear up-sampling in order to support a larger kernel size. 
+Note: we increased the kernel size and did up-sampling to incorporate some component of spatial information. This is a distinction from the original paper, which used 1x1 kernels. 
+\item We then added texture features to the data using the following technique: 
+\item We performed PCA analysis on the first 32 channels of the image, which corresponds to the visible spectrum, and selected the first principal component as a representation of the texture
+\item We then calculated GLCM matrices in 29x29 windows, and appended the contrast of the windows as an additional feature. 
+\item Since we have 1x1 labels and 5x5 kernels, when there is an overlap of areas, we classify the region based on the mode. 
+\item We additionally had to address unlabeled patches by removing them from the data samples when they were encountered. 
+\item We further implemented data augmentation through rotating and flipping the original images to address insufficient training samples. 
+\item We also scaled the weights of classes to compensate for imbalances in the amount of samples in each class. 
+\item We finally segregated the image into equally spaced patches and evenly distributed them to do training and testing on separate data. 
 
 \end{itemize}
+
 
 
 \subsection{Equations}
 
-The equations are an exception to the prescribed specifications of this template. You will need to determine whether or not your equation should be typed using either the Times New Roman or the Symbol font (please no other font). To create multileveled equations, it may be necessary to treat the equation as a graphic and insert it into the text after your paper is styled. Number equations consecutively. Equation numbers, within parentheses, are to position flush right, as in (1), using a right tab stop. To make your equations more compact, you may use the solidus ( / ), the exp function, or appropriate exponents. Italicize Roman symbols for quantities and variables, but not Greek symbols. Use a long dash rather than a hyphen for a minus sign. Punctuate equations with commas or periods when they are part of a sentence, as in
-
+Stuff
 $$
 \alpha + \beta = \chi \eqno{(1)}
 $$
 
-Note that the equation is centered using a center tab stop. Be sure that the symbols in your equation have been defined before or immediately following the equation. Use Ò(1)Ó, not ÒEq. (1)Ó or Òequation (1)Ó, except at the beginning of a sentence: ÒEquation (1) is . . .Ó
+Stuff
+\begin{figure}[thpb]
+      \centering
+      %\framebox{\parbox{3in}{}}
+      \includegraphics[width=220pt]{IndianPines.png}
+      \caption{Indian Pines dataset}
+      \label{figure_IP}
+   \end{figure}
 
-\subsection{Some Common Mistakes}
+\subsection{Methodology}
 \begin{itemize}
 
 
-\item The word ÒdataÓ is plural, not singular.
-\item The subscript for the permeability of vacuum ?0, and other common scientific constants, is zero with subscript formatting, not a lowercase letter ÒoÓ.
-\item In American English, commas, semi-/colons, periods, question and exclamation marks are located within quotation marks only when a complete thought or name is cited, such as a title or full quotation. When quotation marks are used, instead of a bold or italic typeface, to highlight a word or phrase, punctuation should appear outside of the quotation marks. A parenthetical phrase or statement at the end of a sentence is punctuated outside of the closing parenthesis (like this). (A parenthetical sentence is punctuated within the parentheses.)
-\item A graph within a graph is an ÒinsetÓ, not an ÒinsertÓ. The word alternatively is preferred to the word ÒalternatelyÓ (unless you really mean something that alternates).
-\item Do not use the word ÒessentiallyÓ to mean ÒapproximatelyÓ or ÒeffectivelyÓ.
-\item In your paper title, if the words Òthat usesÓ can accurately replace the word ÒusingÓ, capitalize the ÒuÓ; if not, keep using lower-cased.
-\item Be aware of the different meanings of the homophones ÒaffectÓ and ÒeffectÓ, ÒcomplementÓ and ÒcomplimentÓ, ÒdiscreetÓ and ÒdiscreteÓ, ÒprincipalÓ and ÒprincipleÓ.
-\item Do not confuse ÒimplyÓ and ÒinferÓ.
-\item The prefix ÒnonÓ is not a word; it should be joined to the word it modifies, usually without a hyphen.
-\item There is no period after the ÒetÓ in the Latin abbreviation Òet al.Ó.
-\item The abbreviation Òi.e.Ó means Òthat isÓ, and the abbreviation Òe.g.Ó means Òfor exampleÓ.
+\item Method  1
+\item Method  2
+\item Method  3
+\item Method  4
+\item Method  5
+\item Method  6
+\item Method  7
+\item Method  8
+\item Method  9
+\item Method 10
 
 \end{itemize}
 
 
-\section{USING THE TEMPLATE}
+\section{Results}
 
-Use this sample document as your LaTeX source file to create your document. Save this file as {\bf root.tex}. You have to make sure to use the cls file that came with this distribution. If you use a different style file, you cannot expect to get required margins. Note also that when you are creating your out PDF file, the source file is only part of the equation. {\it Your \TeX\ $\rightarrow$ PDF filter determines the output file size. Even if you make all the specifications to output a letter file in the source - if you filter is set to produce A4, you will only get A4 output. }
+\begin{figure}[thpb]
+      \centering
+      %\framebox{\parbox{3in}{}}
+      \includegraphics[width=220pt]{TrainAccuracy.png}
+      \caption{Training Accuracy}
+      \label{figure_TrainAcc}
+   \end{figure}
 
-It is impossible to account for all possible situation, one would encounter using \TeX. If you are using multiple \TeX\ files you must make sure that the ``MAIN`` source file is called root.tex - this is particularly important if your conference is using PaperPlaza's built in \TeX\ to PDF conversion tool.
+\begin{figure}[thpb]
+      \centering
+      %\framebox{\parbox{3in}{}}
+      \includegraphics[width=220pt]{TrainEpochAccuracy.png}
+      \caption{Training Epoch Accuracy}
+      \label{figure_TrainEAcc}
+   \end{figure}
 
-\subsection{Headings, etc}
+\begin{figure}[thpb]
+      \centering
+      %\framebox{\parbox{3in}{}}
+      \includegraphics[width=220pt]{TrainEpochLoss.png}
+      \caption{Training Epoch Loss}
+      \label{figure_TrainELoss}
+   \end{figure}
 
-Text heads organize the topics on a relational, hierarchical basis. For example, the paper title is the primary text head because all subsequent material relates and elaborates on this one topic. If there are two or more sub-topics, the next level head (uppercase Roman numerals) should be used and, conversely, if there are not at least two sub-topics, then no subheads should be introduced. Styles named ÒHeading 1Ó, ÒHeading 2Ó, ÒHeading 3Ó, and ÒHeading 4Ó are prescribed.
+\begin{figure}[thpb]
+      \centering
+      %\framebox{\parbox{3in}{}}
+      \includegraphics[width=220pt]{TestAccuracy.png}
+      \caption{Test Accuracy}
+      \label{figure_TestAcc}
+   \end{figure}
 
-\subsection{Figures and Tables}
+These were our results:
 
-Positioning Figures and Tables: Place figures and tables at the top and bottom of columns. Avoid placing them in the middle of columns. Large figures and tables may span across both columns. Figure captions should be below the figures; table heads should appear above the tables. Insert figures and tables after they are cited in the text. Use the abbreviation ÒFig. 1Ó, even at the beginning of a sentence.
+\begin{itemize}
+\item After implementing the architecture described in the previous section, we were able to achieve an accuracy rate of 88.9\%. This is a 16% increase from our original implementation of the paper. 
+\item The training accuracy was on average 88%, and the testing 85%.
+\item Note that classes 7 and 9 have so little samples, (20 and 28 out of 21025 pixels), that they effectively don’t exist in the image and cannot be classified. 
+\end{itemize}
+
+
 
 \begin{table}[h]
 \caption{An Example of a Table}
@@ -156,23 +257,13 @@ Three & Four\\
 \end{center}
 \end{table}
 
-
-   \begin{figure}[thpb]
-      \centering
-      \framebox{\parbox{3in}{We suggest that you use a text box to insert a graphic (which is ideally a 300 dpi TIFF or EPS file, with all fonts embedded) because, in an document, this method is somewhat more stable than directly inserting a picture.
-}}
-      %\includegraphics[scale=1.0]{figurefile}
-      \caption{Inductance of oscillation winding on amorphous
-       magnetic core versus DC bias magnetic field}
-      \label{figurelabel}
-   \end{figure}
    
-
-Figure Labels: Use 8 point Times New Roman for Figure labels. Use words rather than symbols or abbreviations when writing Figure axis labels to avoid confusing the reader. As an example, write the quantity ÒMagnetizationÓ, or ÒMagnetization, MÓ, not just ÒMÓ. If including units in the label, present them within parentheses. Do not label axes only with units. In the example, write ÒMagnetization (A/m)Ó or ÒMagnetization {A[m(1)]}Ó, not just ÒA/mÓ. Do not label axes with a ratio of quantities and units. For example, write ÒTemperature (K)Ó, not ÒTemperature/K.Ó
 
 \section{CONCLUSIONS}
 
-A conclusion section is not required. Although a conclusion may review the main points of the paper, do not replicate the abstract as the conclusion. A conclusion might elaborate on the importance of the work or suggest applications and extensions. 
+Through the inclusion of our techniques, we were able to improve the accuracy and circumvent some of the problems of the data. 
+We believe we were able to improve the accuracy because our classifier took better advantage of the spatial information in the image, and our added features incorporate an important piece of information to the classifier. Additionally, we believe we make a better use of the available data. Ideally, we would like to further address the low resolution of the image by using spectral un-mixing and modify the architecture further. 
+
 
 \addtolength{\textheight}{-12cm}   % This command serves to balance the column lengths
                                   % on the last page of the document manually. It shortens
